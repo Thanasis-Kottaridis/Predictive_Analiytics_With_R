@@ -1,0 +1,54 @@
+```{r}
+library(data.table)
+library(ggplot2)
+```
+
+
+# Askisi 4
+Θεωρείστε το dataset OctopusF.txt. Διαβάστε τα δεδομένα, υπολογίστε τα περιγραφικά μέτρα του δείγματος (μέση τιμή, τυπική απόκλιση) . Κατασκευάστε το ιστόγραμμα. Ελέγξτε τη κανονικότητα των δεδομένων και κατασκευάστε το διάστημα εμπιστοσύνης.
+
+## Load Dataset
+- Fortonoume ta dedomena apo to CSV arxio
+- Kai ta metatrepoume se R dataframe
+- Telos provaloume to Dataframe
+```{r}
+data <- read.csv('./datasets/OctopusF.txt',sep = ';', row.names=NULL,header = TRUE)
+data
+```
+
+### hc <- hclust(dist(df), method="complete")
+plot(hc)
+ ta perigrafika metra tou dataset kanontas xrhsh twn methodwn var() kai summary()
+
+```{r}
+# calculate dataset variance
+print("calculate dataset variance")
+var(data)
+# calculate dataset summary
+print("calculate dataset summary")
+summary(data)
+```
+
+### Kataskeuazoume Istogramma gia ta dedomena mas
+**Symperasmata**
+Paratiroume oti to dataset den akolouthei tin tipiki kanoniki katanomi.
+Antithetos fenete na akolouthei tin x^2
+```{r}
+# create Histogram
+test <- hist(data$Weight, breaks=40,col='orange')
+test
+```
+## Upologismos diastimatos empistosis [L,U] gia ton meso:
+```{r}
+mean <- mean(data$Weight)
+size <- length(data$Weight)
+
+t <- qt((1 + 0.95)/2, df = size-1)
+se <- sd(data$Weight)/sqrt(n)
+ci <- t * se
+
+L = a - ci
+U = a + ci
+
+message("The lower bound is: ",L)
+message("The upper bound is: ",U)

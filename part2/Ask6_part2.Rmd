@@ -1,0 +1,119 @@
+
+# Imports
+```{r}
+install.packages("neuralnet") 
+library("neuralnet")
+library("readxl")
+install.packages("caret") 
+library(caret)
+install.packages("Metrics") 
+library(Metrics)
+```
+# Askisi 6
+Τα δεδομένα μας είναι αποθηκευμένα ως Concrete_Data.xls. και αναφέρονται σε
+μεταβλητές που επηρεάζουν την ανθεκτικότητα του τσιμέντου. Η ανθεκτικότητα του τσιμέντου είναι μη γραμμική συνάρτηση των μεταβλητών ηλικίας και διαφόρων συστατικών όπως, blast furnace slag, fly ash, water, super-plasticizer, coarse aggregate. Oι πρώτες 8 είναι ανεξάρτητες ποσοτικές ενώ η Concretre compressive
+strength είναι η εξαρτημένη. Χρησιμοποιήστε κάποια πακέτα ώστε να εκπαιδεύσετε το νευρωνικό δίκτυο π.χ. το neuralnet, nnet, RSNNS.
+Κάνετε ανάγνωση των δεδομένων. Στη συνέχεια κάνετε τυποποίηση των δεδομένων σας. Μετά δημιουργείστε τα σύνολα εκπαίδευσης και ελέγχου, Εκπαιδεύστε το μοντέλο σας, κάνετε τη γραφική αναπαράσταση του νευρωνικού και αξιολογήστε το. (χρησιμοποιήστε τη συνάρτηση compute() και δείτε αν λειτουργεί διαφορετικά και γιατί από τη συνάρτηση predict(). Δείτε τι κάνει η συνάρτηση cor(). Βελτιώστε το μοντέλο σας αν γίνετε και δείτε πως επηρεάζεται η συμπεριφορά του μοντέλου σας αν αυξηθεί ο αριθμός των κρυφών κόμβων.
+
+## Load Dataset
+fortonoume to dataset apo to xls arxio kanontas xrisi tis vivliothikis readxl
+kai provaloume to dataset
+
+Ta parakato dedomena anaferonte se metavlites pou epireazoun tin anthektikotita tou tsimentou
+```{r}
+data <- read_excel('./datasets/Concrete_Data.xls')
+data
+```
+# PProetimasia dedomenon
+- Arcika kanonikopoioume to dataset mas kanontas xrisi tis methodou preProccess apo to paketo "caret"
+- Stin sinexia xwrizoume to dataset mas se train kai test sets
+```{r}
+# standarize data
+#preproc1 <- preProcess(dat[,c(1:4,6)], method=c("center", "scale"))
+preproc1 <- preProcess(data, method=c("range"))
+normal_df <- predict(preproc1, data)
+normal_df
+
+# train/test split
+# Create dummy for splitting
+split_dummy <- sample(c(rep(0, 0.7 * nrow(normal_df)), 
+                        rep(1, 0.3 * nrow(normal_df))))
+# Create train data
+data_train <- normal_df[split_dummy == 0, ]      
+# Create test data
+data_test <- normal_df[split_dummy == 1, ]   
+
+data_train
+data_test
+```
+## Dimiourcia kai ekpedefsi tou nevronikou
+- Me tin xrisi tis vivliothikis neuralnet dimiourgoume ena neuroniko to opoio dexete ws isodo ta 8 xaraktiristika kai provlepei to xaraktiristiko concrete
+- Ekpedeuoume to nevroniko mas kanontaw xrhsh twn dedomenon ekpedeusis
+- Kai provaloume tin grafiki anaparastasi tou neuronikou.
+```{r}
+#Neural Networks
+nn_model <- neuralnet(formula = Concrete ~ Cement + Slag + Ash + Water + Superplasticizer + CoarseAggregate + FineAggregate + Age, data = data_train)
+
+plot (nn_model)
+
+```
+## Provlepsi Metavlitis stoxou
+- Diaxorizoume ta dedomena provlepsis se X_test kai y_test
+- Stin sinexia epixiroume provlepsi kai aksiologisi tou neuronikou xrisimopoiontas tin methodo predict()
+- Kai stin sinexia epanalamvanoume tin parapano diadikasia xrisimopoiontas tin methodo compute()
+
+```{r}
+# make predictions
+x_test = data_test[1:8]
+y_test = data_test[9]
+
+x_test
+
+predict_results = predict(nn_model, x_test)
+compute_results = compute(nn_model, x_test)
+```
+
+## Aksiologisi apotelesmaton
+Aksiologoume ta apotelsmata xrisimopoiontas tin methodo cor kai tin methodo rmse pou mas parexei to paketo Metrics
+- arxika aksiologoume ta apotelesmata tou predict 
+- kai stin sinexia ta apotelesmata tou compute
+
+**Symperasmata**
+```{r}
+y_test
+cor(predict_results, y_test$Concrete)
+result = rmse(y_test$Concrete, predict_results)
+result
+```
+```{r}
+y_test
+cor(compute_results$net.result, y_test$Concrete)
+result = rmse(y_test$Concrete, compute_results$net.result)
+result
+```
+# Dimiourgia MLP montelou
+Stin sinexia dimiourgoume ena Multi Layer Perceptron tropopoiontas tis parametrous tou prokimenou na epitixoume oso to dinaton kaliteri provlepsi.
+
+**MLP SET UPs**
+1. 2 hidden layers me 10 neurones to kathe ena dil hidden = c(10,10)
+  - cor: 0.9354031
+  - rmse: 0.07264078
+2.  2 hidden layers me 10 neurones sto proto kai 15 sto deftero dil hidden = c(10,15)
+  - cor:  0.9455605
+  - rmse: 0.067931
+```{r}
+mlp_model = neuralnet(formula = Concrete ~ Cement + Slag + Ash + Water + Superplasticizer + CoarseAggregate + FineAggregate + Age,
+                      data = data_train,
+                      hidden = c(10,15))
+
+plot (mlp_model)
+```
+
+```{r}
+compute_results = compute(mlp_model, x_test)
+cor(compute_results$net.result, y_test$Concrete)
+rmse(y_test$Concrete, compute_results$net.result)
+```
+
+
+

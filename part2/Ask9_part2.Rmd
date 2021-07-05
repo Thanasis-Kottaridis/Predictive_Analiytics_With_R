@@ -1,0 +1,130 @@
+# Imports
+```{r}
+# Install release version from CRAN
+install.packages("olsrr")
+library("olsrr")
+install.packages("corrgram") 
+library("corrgram")
+install.packages("openxlsx") 
+library("openxlsx")
+```
+
+# ASK9 Part 2
+
+Ο αντιπρόσωπος πωλήσεων ενός προϊόντος δεν είναι ικανοποιημένος από τις πωλήσεις του προϊόντος στη ζώνη ευθύνης του. Διαπιστώνει ότι τα προϊόντα που πουλήθηκαν διαφέρουν από κατάστημα σε κατάστημα σε ένα εύρος τιμών από 921 έως 2604 τεμάχια με μέση τιμή 1846,8. Θέλει να γνωρίζει που οφείλεται αυτή η διαφορά και για αυτό επιλέγει τυχαία 37 καταστήματα ίδιου μεγέθους παρατηρώντας τις πωλήσεις του προϊόντος, την τιμή του προϊόντος, τα έξοδα πωλήσεων και το πλήθος των αφίξεων στα εν λόγω καταστήματα για μία ορισμένη χρονική περίοδο. Η παρακάτω έρευνα πρέπει να απαντήσει στο ερώτημα αν οι πωλήσεις σετ-τεμάχια του προϊόντος επηρεάζονται από τα υπόλοιπα μεγέθη που επέλεξε.
+
+Εξετάστε αν
+
+I) Το μοντέλο σας είναι στατιστικά σημαντικό
+II) Αν τα μεγέθη είναι στατιστικά σημαντικά
+III) Αν υπάρχει αλληλεξάρτηση μεταξύ των μεγεθών
+IV) Να υπολογιστούν τα τυποποιημένα υπόλοιπα και μη και να βρεθεί το μικρότερο και μεγαλύτερο υπόλοιπο
+V) Να εξεταστεί η κατανομή των υπολοίπων
+VI) Να γραφεί η σχέση πρόβλεψης για τις πωλήσεις. Που γίνονται οι καλύτερες
+προβλέψεις.
+VII) Γράψετε τη θεωρία που αφορά την ομοιοσκεδαστικότητα και εξετάστε αν
+υπάρχει τέτοια στο μοντέλο σας
+
+**Epilisi Askisis**
+- Arxika fortonoume to sinolo dedomenwn apo to excel arxeio.
+- kai stin sinexia to provaloume ws dataframe
+```{r}
+data = read.xlsx("./datasets/market.xlsx")
+data
+```
+## Analisi xaraktiristikwn
+Paratiroume oti uparxoun oi stoiles pou perigrafei i ekfonisi.
+Stin sunexeia provaloume mia analisy twn xaraktiristikwn tou sunolou dedomenwn.
+```{r}
+summary(data)
+```
+# Diamorfosi montelou gramikis palndromisis.
+
+Arxika diamorfonoume ena Linear Model me to opoio skopeuoume na provlepsoume to xaraktiristikw Sales
+```{r}
+# prepare dataset for regression
+y=data[,1]
+x1=data[,2]
+x2=data[,3]
+x3=data[,4]
+
+# fit regression model
+data.lm = lm(y~x1 + x2 + x3)
+print("----------------------- Summary -----------------------")
+summary = summary(data.lm)
+summary
+```
+
+# Elenxos simantikotitas montelou erwtima(I).
+
+Stin sinexia elenxoume to p-value tou montelou an einai 
+
+Apo to summary tou montelou paratiroume tore to  p-value:  1.953e-13. Epomenos aporiptoume tin mideniki upothesi.
+Ara yparxei statistika symantiki sisxetisi metaksi ton xarakriristikwn kai tis metavlitis stoxos.
+
+```{r}
+p_value =  1.953e-13
+p_value <= 0.05
+```
+
+# Ypologismos Susxetisewn erwtima (III).
+- upologizoume ta correlations
+- provaloume to diagrama
+```{r}
+# upologismos 
+cor(data)
+corrgram(data, order=NULL, lower.panel=panel.shade,
+  upper.panel=NULL, text.panel=panel.txt,
+  main="Market data Correlations")
+```
+
+
+
+## Ypologismos ypolipwn erwtima(IV).
+
+- Ypologizoume ta ipolipa
+- Ypologizoume min kai max apo ta residuals
+
+```{r}
+residuals = summary$residuals
+residuals
+min(residuals)
+max(residuals)
+```
+
+## Eksetazoume tin katanomi ton upolipon erwtima(V).
+
+Elenxoume tin katanomi twn ypolipwn xrisimopoiontas to paketo "olsrr"
+- Arxika provaloume to Q-Q plot ton residuals
+- Stin sinexia prvaloume ta residuals me ta fitted values 
+- Kai telos provaloume to histogram twn residuals.
+
+**Simperasmata**
+Apo ta parapanw grafimata simperenoume oti ta residuals den akolouthoun tin 
+tipiki kanoniki katanomi. 
+
+```{r}
+ols_plot_resid_qq(data.lm)
+#ols_test_normality(data.lm)
+ols_plot_resid_fit(data.lm)
+ols_plot_resid_hist(data.lm)
+```
+
+## eksagogi sxesis provlepsis erwtima(VI):
+
+Apo to Estimate twn coefficients prokiprei oti to gramiko montelo pou dinei tin kaliteri provlepsi einai:
+Sales = 730.0165 - 42.0927\*Preis + 0.5521\*Costs + 9.6489* Arrivals
+
+```{r}
+summary$coefficients
+```
+
+## Elenxos omoskedastikotitas (erwtima VII).
+
+**Symperasma**
+Paratiroume apo to Scale-Location diagram oti sta dedomena mas parousiazete heteroscedasticity problem afou ston diagramma den parousiazete mia orizonta grammi me equally spred points.
+
+```{r}
+plot(data.lm, 3)
+```
+

@@ -1,0 +1,75 @@
+## Askisi 2:
+Θεωρείστε το dataset capital.csv.
+i) Να γίνουν οι γραφικές παραστάσεις της Balance σε σχέση με την Gender (πίνακας σχετικών συχνοτήτων-ραβδόγραμμα-πίττα)
+ii) Na γίνει το θηκόγραμμα των δεδομένων μας και τα θηκογράμματα σε σχέση με το gender
+iii) Nα υπολογιστούν τα μέτρα κεντρικής τάσης και απόκλισης
+iv) Εξετάστε αν τα δεδομένα μας προέρχονται από κανονική κατανομή (πχ.Κάντε Q-Q-plot)
+
+
+## Load Dataset
+- Fortonoume ta dedomena apo to CSV arxio
+- Kai ta metatrepoume se R dataframe
+- Telos provaloume to Dataframe
+```{r}
+data <- read.csv('./datasets/capital.csv',sep = ';', row.names=NULL,header = TRUE)
+data
+```
+
+## Erotima 1
+1. Provoli pinaka sxetikwn sisxetisewn ws tou balance ws pros to gender
+2. Anaparastasi tou parapanw pinaka se pie chart
+3. Anaparastasi tou parapanw pinaka se barchart
+```{r}
+gender_labels <- as.character(data$gender)
+gender_labels[gender_labels == 1] = "male"
+gender_labels[gender_labels == 2] = "fimale"
+gender_table <- table(gender_labels)
+gender_prob_table <- prop.table(gender_table)
+# plot relevant frequences table
+gender_prob_table
+# conver prob table to df
+df = data.frame(gender_prob_table)
+# plot pie chart
+pie(df$Freq, labels = df$gender_labels, col = c('cyan','orange'), main = "Balance/Gender Pie Chart")
+# plot bar chart
+barplot(df$Freq ,col=c('cyan','orange'), main = "Balance/Gender Bar Chart")
+```
+## Erotima 2
+- Arxika kataskeuazoume to tou balance twn dedomenon mas.
+  To gender den exei noima na to provaloume me thokograma kothoti einai katigoriki metavliti.
+- Sti sunexia provaloue ta thikogrammata tou mpalance se sxesi me to gender
+
+```{r}
+# pllot Balance boxPlot
+boxplot(data$balance, col = "cyan")
+
+# plot balance/gender boxplot
+boxplot(data$balance~data$gender, col = c("cyan","orange"), names = c("male","female"))
+```
+## Erotima 3
+Upologizoume ta metra kentrikis tasis kai apoklisis apo to dataset kanontas xrhsh twn methodwn var() kai summary()
+
+```{r}
+# calculate dataset variance
+print("calculate dataset variance")
+var(data)
+# calculate dataset summary
+print("calculate dataset summary")
+summary(data)
+```
+## Erwtima 4
+Elenxoume an ta dedomena mas akolouthoun tin tipiki kanoniki katanomi
+- Arxika kanoume to Q-Q plot gia tin stili Balance twn dedomenwn mas
+- Epita elenxoume an to isograma tis stilis Balance akolouthei tin Tipiki Kanoniki katanomi
+
+**Symperasmata**
+- Apo ta parapanw fenete oti ta dedomena mas Akolouthoun tin tipiki kanoniki katanomi.
+```{r}
+# create Q-Q plot
+qqnorm(data$balance, main="CL Returns")
+qqline(data$balance, col="red")
+
+# create Histogram
+hist(data$balance, breaks=40,col='orange')
+```
+

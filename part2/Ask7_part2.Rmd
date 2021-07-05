@@ -1,0 +1,147 @@
+
+7) Θεωρείστε το σύνολο δεδομένων faithful και εκτιμήστε την επόμενη έκρηξη αν ο
+αναμενόμενος χρόνος από την τελευταία έκρηξη είναι 80 λεπτά. Να βρεθεί ο
+συντελεστής προσδιορισμού και η ευθεία παλινδρόμησης. Ελέγξτε αν υπάρχει
+στατιστικά σημαντική σχέση μεταξύ των δύο μεταβλητών στο μοντέλο της ευθείας
+παλινδρόμησης για τις δύο μεταβλητές των δεδομένων σας με επίπεδο
+σημαντικότητας α=0.05. Κατασκευάστε ένα 95% Δ.Ε. για την μεταβλητή eruption
+duration για δεδομένο χρόνο αναμονής 80 min. Κατασκευάστε ένα 95% διάστημα
+πρόβλεψης της μεταβλητής eruption duration δεδομένο χρόνο αναμονής 80 min.
+Επιπλέον να γίνει το διάγραμμα υπολοίπων της γραμμικής παλινδρόμησης έναντι
+της μεταβλητής waiting. Να γίνει το διάγραμμα της κανονικότητας για τα
+τυποποιημένα υπόλοιπα της γραμμικής παλινδρόμησης.
+
+**Perigrafi Dedomenon**
+Waiting time between eruptions and the duration of the eruption for the Old Faithful geyser in Yellowstone National Park, Wyoming, USA.
+- H stili eruptions: Anaparista ton xrono pou dierkise i ekriksi tou ifestiou
+- To xaraktiristiko waiting anaparista ton xrono apo tin mia ekriksi mexri tin epomeni.
+
+**Zitoumena tis askisis**
+Skopos mas einai na provlepsoume tin diarkia pou tha exei i epomeni ekriksi dedomenou oti tha ginei se 80 lepta.
+
+## Load dataset
+- Arxika fortonoume to dataset prosdiorizontas oti i proti grami einai headr
+- stin sinexia provaloume ta dedomena.
+```{r}
+# load dataset
+data <- read.table('./datasets/faithfull.txt', header = 1)
+data
+
+#plot dataset
+plot(data$waiting, data$eruptions, main = "Faithfull Dataset")
+```
+
+## Fit Linear Regression
+
+- Arxika kanoume Fit to montelo palindromisis sta dedomena mas
+- Provaloume to summary tou prediction
+- Apo to summary elenxoume an to P-value apo ta F-Statistics einai megalitero to 0.05.
+  - **Provlima** Theloume na elenksoume an uparxei statistiki sisxetisi megaliteri tou 0.05 metaksi ton 2 metavliton
+  - **Theoroume oti:** to error stin linear regression model einai aneksartito tou x kai akolouthei tin tipiki katanomi me zero mean kai statheri diakimansi. Mporoume na apofasisoume an iparxei statistika simantiki sisxetisi metaksi x kai y elenxontas tin mideniki ypothesi oti to β = 0. 
+  - **Simperasma** Afou to --value einai arketa mikrotero apo to 0.05 (p-value: < 2.2e-16), aporiptoume tin mideniki ipothesi oti β = 0. Ara iparxei statistika simantiki sisxetisi sto linear regression model.
+  
+- kai stin sinexia provaloume ta dedomena kai tin euthia palindromidid]
+
+```{r}
+fit = lm(eruptions~waiting, data = data)
+
+print("----------------------- Summary -----------------------")
+summary = summary(fit)
+summary
+
+plot(data$waiting, data$eruptions, main = "Faithfull Dataset")
+abline(reg = fit, col="red")
+
+```
+
+## Ypologismos sintelesti prosdiorismou
+```{r}
+r_sqr = cor(data$waiting, data$eruptions) ^ 2
+r_sqr
+```
+
+
+
+## Provlepsi diarkias ekriksis
+Dedomenou oti i ekriksi tha ginei 80 lepta meta tin proigoumeni tis.
+Na provlepsoume ton xrono pou tha diarkesei
+```{r}
+predict(fit, data.frame(waiting=80))
+```
+
+## Kataskeuazoume 95% diastima empistosinis gia to eruption dedomenou oti o xronos anamonis einai 80 min
+- filter dataset na kratisoume mono tis paratirisis me anamoni 80 min
+- ypologismos mesou, size
+-  ypologismos diastimatos empistosisnis
+- Upologismos diastimatos empistosis [L,U] gia ton meso:
+
+```{r}
+# filter 80 min waiting dataset
+data_80min = data[data$waiting == 80,]
+data_80min
+```
+# Upologizoume to 95% diastima empistosinis gia tin metavliti eruptions
+Gia tin evresi tou Diastimatos empistosinis tha xrisimopoieisoume tin protasi
+15.8.4 tou vivliou Theoria pithantitwn kai stoixeia statistikis Analisis selida 874
+
+```{r}
+x0 = 80
+confidence = 0.95
+my_data = data$eruptions
+mean = mean(data$waiting)
+size = length(my_data)
+y_hat = predict(fit, data.frame(waiting=x0))
+zscore = qnorm(0.025,lower.tail=FALSE)
+
+sse <- sum((fitted(fit) - my_data)^2)
+S = sqrt(sse/(size - 2))
+S_xx = sum(my_data^2) - (size*(mean^2))
+S_y = S*(sqrt(1 + (1/size) + ((x0 - mean)^2)/S_xx))
+
+L = y_hat - (S_y*zscore)
+U = y_hat + (S_y*zscore)
+
+message("The lower bound is: ",round(L,4))
+message("The upper bound is: ",round(U,4))
+```
+
+## Kataskeuaste diastima empistosinis 95% gia tin provlepsi tis metavlitis eruption
+Auto to pernoume kanontas xrisimopoiontas tin methodo confinit() gia to filtrarismeno sinio dedomenon pou periexei mono tis paratirisis me waiting time 80min
+kai ekpedeuontas ena kenourio linear regression model me auto to Dataset.
+
+**Symperasmata**
+Paratiroume oti to diastima empistosisnis gia ta dedomena kai gia tin provlepsei einai to idio gia to dataset pou perieixe mono ta dedomena me waiting 80 min
+(4.152208 4.776792)
+```{r}
+fit3 = lm(eruptions~waiting, data = data_80min)
+summary(fit3)
+confint(fit3, level=0.95)
+```
+ 
+ ## Diagramma ipolipwn Gramikis palindromisis.
+ 
+ - Arxika ipologizoume ta residuals tis gramikis palindromisis ws pros ton xrono.
+ - Provaloume to Q-Q plot.
+ - Sti sinexeia plotaroume to histogram gia 20 buckets
+
+```{r}
+Residual = resid(fit) 
+Fitted = fitted(fit)
+plot(Fitted,Residual, 
+     main="Old Faithful geyser dataset: Fitted vs. Residuals", 
+     xlab="Fitted Waiting Time (minutes)")
+abline(h=0, col="blue")
+```
+```{r}
+qqnorm(Residual)
+qqline(Residual, col="red")
+```
+
+```{r}
+Residual = resid(fit) 
+hist(Residual, main = "Histogram of Residuals - 20 breaks", ylab = "Density", 
+     ylim = c(0, 1.5),
+     prob = TRUE,breaks=20, col="lightblue")
+curve(dnorm(x, mean = mean(Residual), sd = sd(Residual)), col="red", add=TRUE)
+```
+

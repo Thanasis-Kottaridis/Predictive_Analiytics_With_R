@@ -1,0 +1,67 @@
+```{r}
+#Librari import
+install.packages("psych") 
+library("psych")
+```
+# Ask 10
+
+Θεωρούμε τα δεδομένα insurance.csv που περιέχει 1338 δεδομένα με τα
+χαρακτηριστικά
+  
+  1. Age:ηλικία του ασφαλισμένου
+  2. Sex
+  3. Bmi: Δείκτης μάζας του σώματος (BMI= βάρος σε κιλά του ασφαλισμένουπρος το τετράγωνο του ύψους), ένας ιδεατός δείκτης είναι μεταξύ 18,5 και 24,9
+  4. Children: αριθμός παιδιών που συμμετέχουν στο πρόγραμμα του κυρίως ασφαλισμένου
+  5. Smoker
+  6. Region: Η περιοχή διαμονής του ασφαλισμένου: northeast, southeast, southwest or northwest
+
+Σκοπός μας είναι να μελετηθεί πως αυτές οι μεταβλητές επηρεάζουν τα έξοδα. Κάντε
+Ι) Ανάγνωση των δεδομένων
+ΙΙ) Έλεγχο των μεταβλητών (χρησιμοποιήστε το πακέτο “psych”)
+ΙΙΙ) δημιουργείστε το κατάλληλο μοντέλο ώστε να απαντήσετε το παραπάνω ερώτημα
+
+
+**Epilisi**
+Prokimenou na epilisoume to ervtima III) Tha diamorfosoume ena montelo grammikis palindromisis 
+to opoio tha apoteleite apo ola ta xaraktiristika kai tha provlepei tin stili charges
+```{r}
+data <- read.csv('./datasets/insurance.csv', sep=',', head=1)
+
+data
+```
+## Perigrafi sinolou dedomenwn
+  1. Age:ηλικία του ασφαλισμένου
+  2. Sex
+  3. Bmi: Δείκτης μάζας του σώματος (BMI= βάρος σε κιλά του ασφαλισμένουπρος το τετράγωνο του ύψους), ένας ιδεατός δείκτης είναι μεταξύ 18,5 και 24,9
+  4. Children: αριθμός παιδιών που συμμετέχουν στο πρόγραμμα του κυρίως ασφαλισμένου
+  5. Smoker
+  6. Region: Η περιοχή διαμονής του ασφαλισμένου: northeast, southeast, southwest or northwest
+
+```{r}
+summary(data)
+
+describe(data)
+```
+# Metatropi katigorikwn dedomenon se sinexei
+Protikenou na dimiourgisoume to montelo gramikis palidromisis metatrepoume 
+ta xaraktiristika sex,smoker kai region se sinexi.
+```{r}
+continues_matrix = data.matrix(data)
+continues_df = data.frame(continues_matrix)
+continues_df
+```
+## Kanoume fit to linear model.
+Apo to summary tou montelou paratiroume tore to  p-value: < 2.2e-16. Epomenos aporiptoume tin mideniki upothesi.
+Ara yparxei statistika symantiki sisxetisi metaksi ton xarakriristikwn kai tis metavlitis stoxos.
+
+```{r}
+fit <- lm(charges ~ age + sex + bmi + children + smoker + region, data=continues_df)
+summary(fit)
+
+summ = summary(fit)
+
+t = 2.2e-16 < 0.05
+t
+```
+
+

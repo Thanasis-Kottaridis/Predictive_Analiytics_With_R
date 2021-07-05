@@ -1,0 +1,33 @@
+## Imports
+```{r}
+library(dplyr)
+library(explore)
+```
+
+
+# Askisi 3
+Θεωρείστε τα δεδομένα του αρχείου mtcars που ακολουθούν κανονική κατανομή.
+Να βρεθεί το διάστημα εμπιστοσύνης με συντελεστή εμπιστοσύνης 0,95 για τη διαφορά των μέσων που αντιστοιχούν στις μεταβλητές κατανάλωσης καυσίμου για το μηχανικό και αυτόματο αυτοκίνητο. (εφαρμόστε την συνάρτηση t.test())
+
+
+## Load DATASET
+- Fortonoume kai provaloume to dataset
+- kai stin sinexia to xorizoume se 2 uposinola (a,b) opou:
+  - to Sunolo A pereixei to mpg (miles/galon) gia ta automata oximata (am = 1)
+  - to sinolo B to mpg (miles/galon) gia ta xirokinita oximata (am = 0)
+- Telos efarmozoume tin methodoo t-test gia na eksagoume apotelesmata
+
+**Symperasmata**
+- Paratiroume oti i mideniki ipothesis (oti oi means twn 2 dataset einai isi) den epalitheutike
+- Episis paratiroume oti to 95% diastima empistosinis kimenete apo -32.3497623 ews 0.7538182
+
+```{r}
+mtcars
+A = mtcars[mtcars$am == 1,]$mpg
+B = mtcars[mtcars$am == 0,]$mpg
+t.test(A,B)
+```
+```{r}
+
+```
+

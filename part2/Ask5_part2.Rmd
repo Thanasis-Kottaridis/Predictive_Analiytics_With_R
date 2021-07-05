@@ -1,0 +1,29 @@
+# Imports
+```{r}
+library('MASS')
+```
+
+
+# Askisi 5
+Φορτώστε τη βιβλιοθήκη MASS και στο αρχείο δεδομένων survey. Η στήλη smoke δείχνει τον βαθμό καπνίσματος των φοιτητών, ενώ η στήλη Exer σημειώνεται το επίπεδο σωματικής τους άσκησης. Τα επιπεδα καπνίσματος είναι «Heavy”, “regul”, “Occas” “Never”. Για τη μεταβλητή Exer αυτά είναι «Freq”, “Some”, “None”. Να εξετάσετε πόσο ο βαθμός καπνίσματος επηρεάζει τη σωματική άσκηση
+Υπόδειξη: Πίνακας συνάφειας και chi^2 test
+
+### Load Data
+
+- Fortonoume ta dedomena 
+- eksagoume tin stili smoke kai tin stili exet
+```{r}
+survey
+```
+
+# Elenxos an o vathmos kapnismatos epireazei tin somatiki askisi
+- Paratiroume apo ton pinaka sinafias oti ta perisotera digmata pou fenete na athlounte sixna i peristasiaka den exoun kapnisei pote
+- episis apo to x^2 test eksagoume p-value = 0.4828 > 0.05 epomenos den mporoume na aporipsoume tin mideniki ipothesi i opoia itan oti 
+  iparxei susxetisi metaksi tou epipedou kapnismatos kaitou epipedou askisis.
+```{r}
+coh_table <- table(survey$Smoke,survey$Exer )
+coh_table
+
+chisq.test(survey$Smoke, survey$Exer)
+```
+

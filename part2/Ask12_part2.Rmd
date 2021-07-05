@@ -1,0 +1,51 @@
+#Imports
+```{r}
+install.packages("fpc") 
+library("fpc")
+```
+
+
+
+# Ask 12 part2
+Εφαρμόστε τον αλγόριθμό DBSCAN με ε=1 και MinPts=3. Σε ποια κατηγορία
+ανήκουν τα σημεία a,b,c?
+Εφαρμόστε τον Κ-means και βρείτε το καλύτερο δυνατό πλήθος συστάδων k
+
+- Arxika eksagoume ta dedomena apo to grafima
+- kai dimiourggoume ena dataframe pou na ta periexei auta
+
+```{r}
+x <- c(1, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 6, 6, 6, 6, 7, 8, 9, 9)
+y <- c(5, 6, 2, 3, 5, 6, 7, 8, 3, 5, 7, 8, 4, 6, 8, 4, 5, 6, 7, 4, 3, 2, 5)
+
+data <- data.frame(x, y)
+```
+
+## Efarmozoume DBSCAN. 
+Me eps = 1 kai minPts = 3
+**Paratirisi** O algorithmos DBSCAN episrefei to plot kai tis sistades opws 
+exoun taksinomithei se kathe epanalipsi.
+opou:
+- epsilos = i aktina tis gitonia
+- kai minPts to elaxisto plithos simwn gia na therithei mia gitonia
+```{r}
+clusters <- dbscan(data, eps=1, MinPts=3, showplot=TRUE)
+```
+
+## Prosdiorismos katalilou arithmou sistadwn:
+
+Xrisimopoiontas to diagramma tou Elbow Rule xrisimopoiontas SSE 
+paratiroume oti parousiazei 2 simantika simia kampis:
+- Axika sto simio 3 to opoio parousiazei arketi diafora simantikotitas sigkritika me to 4
+- Kai episis to simio 5 opou apo to auto kai meta den exoume simantiki miosi tou sfalmatos
+```{r}
+
+n_row = nrow(data)-1
+wss = (n_row) * sum(apply(data,2,var))
+for(i in 2:n_row){
+ 	wss[i] <- sum(kmeans(data,centers=i)$withinss)
+}
+plot(1:n_row, wss, type="b",xlab="Number of Clusters",ylab="Sum of Square Errors per group")
+```
+
+

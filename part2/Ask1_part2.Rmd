@@ -1,0 +1,52 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Imports
+Eisagoume to tou Rpart
+```{r}
+install.packages("rpart") 
+library(rpart)
+```
+## Fortosi kai analisy dedomenon 
+- Fortonoume kai provaloume to dataset kyphosis
+- Perigrafoume to Dataset me tin entoli summary
+- Dimiourgoume to thikograma gia ti stili number
+
+```{r}
+# load dataset
+kyphosis
+# describe dataset
+summary(kyphosis)
+# plot boxplot of column number
+boxplot(kyphosis$Number)
+```
+## Evresi twn outliers
+- Xrisimopoioume tin entoli bocplot.stats kai na ekagoume simperasmata pou perigrafonte apo to thikograma.
+  Apo auta paratiroume oti oi times 9 kai 10 apoteloun ta outliers mas.
+- Xrisimopoioume tin entoli whitch(dataset$col%in%c(vector of values)) gia na eksagoume tous indexes olwn ton rows pou periexoun ta outliers.
+```{r}
+# provoli statisikwn.
+stats = boxplot.stats(kyphosis$Number)
+print("kyphosis number stats")
+stats
+# eksagoume tis times twn outliers
+outlier_vals = stats$out
+print("kyphosis number outlier values")
+outlier_vals
+# ekagoume tous indexes twn gramwn pou tis periexoun apo to dataset
+outlier_indexes = which(kyphosis$Number%in%outlier_vals)
+print("kyphosis number indexes of outlier values")
+outlier_indexes
+```
+## Xrish sunartisis identify.
+- Epanalamvanoume tin parapanw diadikasia xrisimopoiontas tin sinartisi identyfy gia tin evresi twn outliers
+
+```{r}
+indexes = 1:length(kyphosis$Number)
+
+plot(indexes, kyphosis$Number)
+identify(indexes, kyphosis$Number, labels=indexes, plot=TRUE)
+```
+
