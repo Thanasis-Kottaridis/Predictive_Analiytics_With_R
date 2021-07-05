@@ -1,0 +1,106 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Import Libraries
+```{r}
+install.packages("astsa") 
+library(astsa)
+```
+
+## Askisi 5:
+Τα στοιχεία του πίνακα παρουσιάζουν τις πωλήσεις μπίρας μίας βιομηχανίας (σε εκατομμύρια μπουκάλια) ανά περιοχή από το 2016μέχρι το 2019
+1. Να υπολογιστούν οι εποχιακοί δείκτες
+2. Να γίνει εξάλειψη της εποχικότητας χρησιμοποιώντας του δείκτες εποχικότητας Να προσαρμοστεί η γραμμική τάση
+3. Να υπολογιστεί η σχετική τάση
+4. Να γίνει πρόβλεψη των πωλήσεων για το καλοκαίρι του 2020
+
+### Bima 1:
+Fortonoume ta dedomena se ena R array.
+```{r}
+# declare data per year
+data2016 = c(3.1, 5.1, 5.3, 3.6)
+data2017 = c(3.3, 5.1, 5.8, 3.7)
+data2018 = c(3.4, 5.3, 6, 3.8)
+data2019 = c(3.7, 5.4, 6.1, 3.9)
+
+# combin data
+data = append(data2016, data2017)
+data = append(data, data2018)
+data = append(data, data2019)
+
+data
+```
+
+
+### Bima 2:
+Pragmatopoioume elenxo ton dedomenon gia tin kaliteri katanoisi tous:
+- Elenxoume an ta data einai xronoseira.
+- Provaloume tin xronoseira
+- Ipologizoume ta ACF kai PACF
+
+```{r}
+x=ts(data)
+
+# plot cmort data
+plot.ts(x, main="Dataset")
+
+# plot PACF 
+acf2(x,10)
+```
+
+### Bima 3:
+
+Paratiroume oti i xronosira den einai stasimi. Diladi:
+
+Parateoume oti sta dedomena ipaexei epoxikotita kai poio sigkekrimena quarterly seasonality diladi S = 4.
+Episis Paratirite kai mia anodiki tasi stin xronosira
+Arxika provaloume tin euthia tis tasis kanontas decompose ta data mas
+
+
+```{r}
+ts_data = ts(data, freq = 4)
+decomp_data = decompose (ts_data, type = "multiplicative")
+plot (decomp_data)
+plot (decomp_data$trend)
+```
+
+``
+**Epilisi tou parapano thematos**
+Gia na epilisoume to parapano thema litourgoume ws eksis:
+1. Dilonoume oti i xronosira exei sixnotita 4 (dedomenou oti exei quardatic trend)
+2. Apalifoume tin epoxikotita pernontas tis 4es diafores
+3. Apalifoume tin tasi pernontas tin 1i diafora afou exoume parei tis 4 diafores
+```{r}
+# take 4th diffs to remove seasonality from data
+diff4 = diff(x, 4)
+plot.ts(diff4)
+# take 1st diffs to remove trend from data
+diff1and4 = diff(diff4,1)
+plot.ts(diff1and4)
+
+acf2(diff1and4)
+```
+
+### Fit Arima model
+Apo ta PCF kai PACF simperenoume oti ena pithano montelo tha mporouse na einai to AR(2)
+```{r}
+# apply diff data on ARIMA(2,0,0)
+fitARIMA <- arima(diff1and4, order=c(2,0,2), seasonal = c(1,0,0))
+fitARIMA
+```
+
+### Provlepsei ws to Fthinopoorou tou 20.
+```{r}
+residuals(fitARIMA)
+pred <- predict(fitARIMA, n.ahead = 4)
+
+```
+### Provoli apotelesmaton
+```{r}
+result <- append(diff1and4, pred$pred)
+result
+plot.ts(diff1and4, main = "Original series (detrend and without seasonality)")
+plot(result,type= "b", main = "Prediction Results", col=ifelse(1:length(result) < length(result) - 3, "black", "red"))
+```

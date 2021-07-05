@@ -1,0 +1,327 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Import Libraries
+```{r}
+install.packages("astsa") 
+library(astsa)
+```
+### Examine Cmort dataset
+
+Average weekly cardiovascular mortality in Los Angeles County; 508 six-day smoothed averages obtained by filtering daily values over the 10 year period 1970-1979.
+
+- plot cmort dataset to take a look at the data
+- plot lag1 of cmort dataset
+
+
+**Simperasmata apo ta Dedomena**
+1. Paratiroume oti to dataset exei mia elafros fthinousa tasi
+2. Paratiroume oti iparxei mia epoxikotita sta dedomena (lamvanontas ypoopsin oti kathe xronos exei 52 vdomades elenxontas tis 501 vdomades pou exoun kataxorithei sto dataset)
+
+**Ektimisi pithanon montelwn**
+Apota PACF kai ACF plots paratiroume ta eksis:
+1. To ACF grafima fenete na fthinei (oxi omos ekthetika)
+2. Sto PACF grafima vlepoume 2 spikes gia lag 1 kai 2
+```{r}
+# load c mort dataset and make sure that it is a time series 
+x=ts(cmort)
+
+# plot cmort data
+plot.ts(x, main="Cmort Dataset")
+
+# plot cmort lag 1
+lag1.plot(cmort,1)
+
+# plot ACF for  24 lags
+acf(x, xlim=c(1,24))
+
+# plot PACF or  24 lags
+acf2(x)
+```
+### Differecing Dataset
+
+- Dedomenou oti paratirithike mia mikri fthinousa tasi tha xriastei na paroume tis protes diafores gia tin eksalipsi autis
+- Episis exei paratirithei kai mia epoxikotita ana peripou 52 periodous opote oi protes diafores mporei na voithisoun kai stin eksalipsi autis.
+
+**Symperasmata**
+Meta tin efarmogi ton proton diaforwn apo ta diagramata ACF kai PACF prokiptei oti ena AR(1) montelo tha itan katalilo gia tin epilisi tou provlimatos
+```{r}
+xdiff=diff(x,1)
+# plot cmort data
+plot.ts(xdiff, main="Cmort Dataset After First Diffs")
+
+plot(xdiff, type="b")
+
+# plot ACF for  24 lags
+acf(xdiff)
+
+# plot PACF or  24 lags
+acf2(xdiff)
+```
+
+## Erotima 1)
+Έστω xt η χρονοσειρά (cmort). Προσαρμόστε τα δεδομένα σε ΑR(2) μοντέλο
+χρησιμοποιώντας γραμμική παλινδρόμηση. Στη συνέχεια με το προσαρμοσμένο μοντέλο που βρήκατε να κάνετε πρόβλεψη σε ορίζοντα 4 βδομάδων και να βρείτε ένα 95% διάστημα εμπιστοσύνης για την πρόβλεψη.
+```{r}
+xlag1 = lag(xdiff,-1)
+xlag2 = lag(xdiff,-2)
+# create new dataset
+y = cbind(xdiff,xlag1,xlag2)
+# drop NA
+y<-y[complete.cases(y),]
+k<-data.frame(y)
+
+xdiff <- k$xdiff
+xlag1 <- k$xlag1
+xlag2 <- k$xlag2
+
+fit = lm(xdiff~xlag1+xlag2, data = data.frame(y))
+summary(fit)
+confint(fit, level=0.95)
+```
+
+Pragmatopoiooume provlepsi gia 4 vdomades (diladi 4 fores) xrisimopoiontas ta apotelesmata tis proigoumenis provlepsis san input stin epomeni
+```{r}
+results <- c()
+for (i in 1:4) {
+  
+  # 334  -1.89 -12.77   8.36
+  # 335 x0 -1.89 -12.77
+  # 335 x1 -12.77 x0
+  # 335 x2 x0 x1
+  # 335 x3 x1 x2
+ last_row = tail(y,1)
+ newData =  data.frame(xlag1 = last_row[1], xlag2 = last_row[2])
+
+ pred_val = predict(fit, newdata = newData)
+ results <- append(results, pred_val)
+
+ # update y array
+ y <- rbind(y, c(pred_val, last_row[1], last_row[2]))
+}
+
+print("Forcast results for 4 weaks")
+print(results)
+```
+
+### Symperasmata
+Paratiroume oti pernoume ta idia apotelesmata me tin methodo sarima.for pou parexei to package astasa
+- sarima.for results: 1.36352984 -0.50021224  0.14907469 -0.07605003
+- our model results:  1.35756663 -0.50455898  0.14481998 -0.08065968 
+```{r}
+# dimiourgia AR(1) model
+sarima (xdiff, 2, 0, 0)
+sarima.for(xdiff, 4, 2, 0, 0)
+```
+
+
+## Erotima 2)
+Δημιουργείστε n=500 παρατηρήσεις από ένα ARMA μοντέλο με τον τύπο
+Xt= 0.9Xt-1 + Wt - 0.9Wt-1 οπου Wt~iidN(0,1)
+
+**Paratirisis**
+1. Arxika paratiroume oti ta ACF kai PACF dixnoun oti ta dedomena den mporoun na anaparastathoun mono me ena AR i ena MA montelo kati pou mas odigei sto simperasma oti ena ARMA montelo einai i lisi
+2. episis fenete oti ta residuals tou ACF den einai statistika simantika (kati pou ipodilonei oti to montelo mas einai kalo)
+3. ta p-values fenete na einai ola mi statistika simantika (kati pou ipodilonei oti to montelo mas einai kalo)
+4. kai to Q-Q plot dixnei oti i provlepsis tou montelou einai kales.
+
+Ta parapano simperasmata einai anamenomena dioti ta dedomena paraxthikan simfona me to sigkekrimeno montelo.
+```{r}
+# Genetate 500 observations using arima.sim
+gen_data <- arima.sim(model = list(ar = 0.9, ma = 0.9), n = 500)
+# make sure that gen_data is time series 
+gen_data=ts(gen_data)
+
+# plot series
+plot.ts(gen_data, main="Generated Series")
+
+# plot ACF and PACF 
+acf2(gen_data)
+
+# apply data on ARIMA(1,0,1)
+sarima (gen_data, 1, 0, 1)
+```
+## Erotima 3)
+Θεωρείστε τα δεδομένα oil Προσαρμόστε τα δεδομένα με ένα ARIMA (p,d,q) κατάλληλο μοντέλο και κάντε το διαγνωστικό έλεγχο του μοντέλου καθώς και την 
+αξιολόγηση αυτού
+
+**Dataset Info**
+Annual oil production (millions of tonnes), Saudi Arabia, 1965-2010.
+
+**Symperasmata**
+1. Apo to diagrama tis xronosiras paratiroume oti exoume anodiki tasi. Kati pou mas odigei sto na efarmosoume protes diafores gia na apalipsoume tin tasi stin xronosira.
+2. episis kai to ACF diagramma to epiveveonei auto kathos den fthinei ekthetika.
+
+```{r}
+# load oil dataset and make sure that it is a time series 
+x=ts(oil)
+
+# plot oil data
+plot.ts(x, main="Oil Dataset")
+
+# plot oil lag 1
+lag1.plot(oil,1)
+
+# plot ACF and PACF 
+acf2(x)
+
+```
+
+### 1st Differencing
+
+Tha dokimasoume 2 diaforetikes paralages gia differecing:
+Arxika dokimazoume tis protes diafores. Xrisimopoiontas tis opoies prokoiptoun ta eksis.
+- Apo ta ACF kai PACF den antiprosopeuoun kapoio AR i kapoio MA montelo. Opote kataligoume sto simerasma na dokimasoume to ARMA(1,1) pano sta dedomena pou prokiptoun apo tis 1es diafores.
+- Apo tin aksiologisi tou parapano montelou ta apotelesmata den einai poli entharintika dioti paratiroume statistika simantika reciduals tou lag 7, 25 kai 25 
+- Episis kai to Ljung-Box den einai katholou entharintiko afou ola ta p-values einai mi statistika simantika.
+
+```{r}
+
+xdiff=diff(x,1)
+# plot oil data
+plot.ts(xdiff, main="Oil Dataset After First Diffs")
+
+# plot ACF and PACF for first diff data
+acf2(xdiff)
+
+# apply data on ARIMA(1,0,1)
+sarima (xdiff, 1, 0, 1)
+```
+
+### Log Differencing
+
+Epidi ta dedomena mas fenete na akolouthoun ekthetiki tasi tha efarmosoume diafora ton logarithmon sto dataset oil. Meta tin diaforisi paratiroume:
+- Oti kai to ACF kai to PACF midenizonte meta to 4o lag kati mou mas ipodilonei tin iparksi enos ARMA(1,1) montelou gia ta dedomena pou prokipsan apo tin diaforisi.
+- efarmozontas to parapano montelo pernoume kalitera ACF residuals apo tis protes diafores kathos episis kai kalitero Ljung-Box
+- Episis kai to Q-Q plot dixnei na pragmatopoiei kales provlepsis akriopoiontas auto to montelo
+
+**Symperasmata:**
+Apo ta parapano kataligoume oti gia to dataset Oil tha efarmosoume ena ARIMA montelo me: 
+- AR taksis 1.
+- MA taksis 1.
+- Kai logarithmikes diafores.
+```{r}
+# Calculate approximate oil returns
+oil_returns <- diff(log(oil))
+
+# Plot oil_returns. Notice the outliers.
+plot(oil_returns)
+
+# plot ACF and PACF for first diff data
+acf2(oil_returns)
+
+# Assuming both P/ACF are tailing, fit a model to oil_returns
+sarima(oil_returns, 1, 0, 1)
+
+```
+## Erotima 4)
+ 
+Θεωρείστε τα δεδομένα globtemp. Προσαρμόστε τα δεδομένα με ένα ARIMA (p,d,q) κατάλληλο μοντέλο και κάντε το διαγνωστικό έλεγχο του μοντέλου καθώς και την αξιολόγηση αυτού. Στη συνέχεια κάντε πρόβλεψη για τα επόμενα 10 χρόνια
+
+**Analisi Dedomenon**
+ Global-mean monthly […] and annual means, 1880-present, updated through most recent month.
+```{r}
+# load globtemp dataset and make sure that it is a time series 
+x=ts(globtemp)
+
+# plot oil data
+plot.ts(globtemp, main="Global Temp Dataset")
+
+# plot oil lag 1
+lag1.plot(globtemp,1)
+
+# plot ACF and PACF 
+acf2(x)
+```
+### Differecing
+Apo tin parapano analisi ton dedomenon fenete oti ta dedomena exoun auksitiki tasi. Gia ton logo auto tha efarmosoume protes diafores prokimenoun na apalipsoume tin tasi auti.
+Efarmozontas ta ACF kai PACF sta dedomena afou paroume tis protes diafores gia na eksalipsoume tin tasi prokoiptoun ta eksis 3 pithana mpontela pou mporoume na xrisimopoieisoume:
+1. ARIMA(1,1,1) auto to montelo dokimastike dedomenou oti kai to ACF kai to PACF pavoun kai ta 2 na einai statistika simantika kai den paratirite kapoio apo ta 2 na fthinei ekthetika
+2. ARIMA(0,1,2) auto to montelo dokimastike dedomenou ACF grafima exei 2 spikes 
+3. ARIMA(3,1,0) auto to montelo dokimastike dedomenou PACF grafima exei 3 spikes
+```{r}
+
+xdiff=diff(x,1)
+# plot globtemp data
+plot.ts(xdiff, main="Global Temp Dataset After First Diffs")
+
+# plot ACF and PACF for first diff data
+acf2(xdiff)
+
+# apply diff data on ARIMA(1,0,1)
+sarima (xdiff,1,0,1)
+```
+
+```{r}
+sarima (xdiff,3,0,0)
+```
+
+```{r}
+sarima (xdiff,0,0,2)
+```
+
+**Symperasmata**
+Apo tin efarmogi ton 3wn parapano montelon prokiptei oti ola kanoun kalo fit dioti:
+- kai ta 3 exoun ACF residuals Mi statistika simantika
+- kai Ljung-Box me statistika simantika p-values.
+
+Wstoso gia provlepsi epilegoume to montelo ARIMA(1,1,1) prokimenou na pragmatopoiisoume provlepsi gia ta epomena 10 xronia dioti exei tous xamiloterous AIC kai BIC diktes
+
+```{r}
+sarima.for(globtemp, 10, 1, 1, 1)
+```
+## Erotima 5)
+Θεωρείστε τα δεδομένα chicken Προσαρμόστε αυτά σε κατάλληλο μοντέλο ARIMA και κάντε πρόβλεψη για τους επόμενους 12 μήνες.
+
+**Analisi Dedomenon**
+Poultry (chicken), Whole bird spot price, Georgia docks, US cents per pound
+
+```{r}
+# load globtemp dataset and make sure that it is a time series 
+x=ts(chicken)
+
+# plot oil data
+plot.ts(chicken, main="Chicken Dataset")
+
+# plot oil lag 1
+lag1.plot(chicken,1)
+
+# plot ACF and PACF 
+acf2(x)
+```
+### Differecing
+
+Paratiroume oti ta dedomena exoun auksitiki tasi ta dedomena opote tha efarmosoume 1es diafores.
+Apo ta ACF kai PACF paratiroume oti to ACF akolouthi fthinei ekthetika akolouthontas imitonoidi motivo kai episis paratiroume 2 spikes sto lag 1 kai 2 gia to PACF. Endiksis pou mas odigoun na xrisimopoiisoume ena AR(2) montelo pano sta dedomena pou proekipsan apo tis diafores
+
+**Symperasmata**
+Parolo pou ta ACF kai PACF mas odigoun stin efarmogi enos AR(2) montelou gia tin proti diafora. Ta apotelesmata den einai poli entharintika dioti:
+- Paratiroune orismena statistika simanika residuals
+- Kathos kai mi statistika P-values to ljung-Box plot.
+```{r}
+xdiff=diff(x,1)
+# plot globtemp data
+plot.ts(xdiff, main="Chicken Dataset After First Diffs")
+
+# plot ACF and PACF for first diff data
+acf2(xdiff)
+
+# apply diff data on ARIMA(2,0,0)
+sarima (xdiff,2,0,0)
+```
+**Aksiologisi montelou**
+To montelo AR(2) Den douleuei opos tha itan anamenomeno kai auto giati paratirite oti sta dedomena mas meta tin efarmogi ton proton diaforon iparxei epoxikotita kai poio sigkekrimena monthlly seasonality. Auto fenete kai apo to grafimia tis xronosiras twn prwton diaforwn  alla kai apo to ACF grafima to opoio akolouhti imitonoidi morfi me periodo ena lag.
+
+Gia tin eksalipsi autis tis epoxikotitas tha xrisimopoiisoume ena seasonal arima *SARIMA(2,0,0)x(1,0,0) me S = 12*.
+
+To opoio fenete na douleuei poli kala me ta dedomena mas kathos:
+- Ola ta residuals einai mi statistika simantika
+- kai ola ta p-values sto Ljung-Box plot einai statistika simantika.
+
+```{r}
+# apply diff data on ARIMA(2,0,0)
+sarima (xdiff,2,0,0, P=1,D=0,Q=0, S=12)
+```
+

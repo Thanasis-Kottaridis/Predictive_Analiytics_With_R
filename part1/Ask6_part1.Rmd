@@ -1,0 +1,212 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+### Import Libraries
+```{r}
+install.packages("astsa") 
+library(astsa)
+install.packages("forecast") 
+library(forecast)
+install.packages("tidyverse", dependencies = TRUE)
+library(tidyverse)
+```
+## Askisi 5:
+
+the daily USD/CAD exchange rates for the last 2 years
+
+1.Plot the time series 
+
+2. Βρείτε την ευθεία της τάσης με γραμμική παλινδρόμηση
+Και κάντε το κοινό γράφημα
+
+3. Βρείτε quadratic trend και κάντε πάλι το γράφημα
+
+4. Υπολογίστε τις πρώτες και δεύτερες διαφορές και κάντε τα αντίστοιχα γραφήματα
+
+5. Κάντε μία πρόβλεψη με ένα από τα παραπάνω μοντέλα (4) για τις επόμενες 22 μέρες.
+
+6. Προσθέστε μία εποχική συνιστώσα (π.χ. την επίδραση του Ιανουαρίου) στην γραμμική τάση (φτιάξτε μία binary μεταβλητή που θα δείχνει αν το exchange rate είναι από το Γενάρη ή όχι) Κάντε fit το μοντέλο με την επίδραση του Γενάρη.
+
+(hint : χρησιμοποιείστε τη συνάρτηση format to convert the dates to strings)
+
+7. Κάνετε fit a quadratic trend θεωρώντας και την επίδραση του Γενάρη
+
+8. Κανετε το γράφημα διασποράς μεταξύ των τιμών exchange rates and the lagged values
+
+9. Υπολογίστε την αυτοσυσχέτιση r_1 υστέρησης 1. Τι παρατηρείτε?
+
+10. Φτιάξτε μια συνάρτηση (ονομάστε την cal AC(y,k) που θα υπολογίζει την αυτοσυσχέτιση υστέρισης k γενικά για μία χρονοσειρά
+
+
+11. Στα παραπάνω δεδομένα φτιάξτε το ΑR(1) και MA(1) μοντέλο ΑR(1)=ARIMA(1,0,0)
+MA(1)=ARIMA(0,0,1)
+
+
+### Bima 1:
+Load the dataset that we fetched form www.bankofcanada.ca in to csv file seperated by ';' and select the column FXUSDCAD that contains the values that we are interested in.
+```{r}
+path = "/Users/thanoskottaridis/Documents/metaptixiako_files/main lectures/b_eksamino/predictive_analytics/Apalaktiki Ergasia/final_project/Ask6_dataset.csv"
+#x = read.csv(path,header=TRUE)
+data = read.table(path, sep=";",dec=".",header=TRUE)
+```
+
+### Bima 2:
+Pragmatopoioume elenxo ton dedomenon gia tin kaliteri katanoisi tous:
+- Elenxoume an ta data einai xronoseira.
+- Provaloume tin xronoseira (Erwtima 1 tis askisis)
+- Ipologizoume ta ACF kai PACF
+
+```{r}
+x=ts(data$FXUSDCAD, frequency=235)
+
+# plot cmort data
+plot.ts(x, main="USD/CDA Exchange Dataset")
+
+x
+```
+Βρείτε την ευθεία της τάσης με γραμμική παλινδρόμηση
+Και κάντε το κοινό γράφημα
+```{r}
+time = time(x)
+reg0 <- lm(x~time)
+plot(x)
+points(time,predict.lm(reg0),type='l',col='red')
+```
+
+
+# Quadratic trend
+
+III. Βρείτε quadratic trend και κάντε πάλι το γράφημα
+```{r}
+reg1 <- lm(x~time + I(time^2))
+plot(x)
+points(time,predict.lm(reg1),type='l',col='red')
+```
+
+IV. Υπολογίστε τις πρώτες και δεύτερες διαφορές και κάντε τα αντίστοιχα γραφήματα
+```{r}
+# Protes diafores
+diff1<-diff(x,1)			
+plot.ts(diff1, main = "First Diffs Plot")
+
+#Defteres diafores
+diff2<-diff(x,2)	
+plot.ts(diff2, main = "Second Diffs Plot")
+```
+
+v) να βρεθεί η πρόβλεψη και το 95% Διάστημα πρόβλεψης για 22 μέρες χρησιμοποιώντας
+το μοντέλο τυχαίου περίπατου. Στο γράφημα πρέπει αν φαίνονται και το άνω και κάτω
+φράγμα του διαστήματος πρόβλεψης (υπόδειξη : Στο άξονα y χρησιμοποιείστε μεγάλο
+εύρος διαφορετικά τα φράγματα του διαστήματος πρόβλεψης δεν θα φαίνονται στο σχήμα.
+Στο άξονα x είναι η μέρα  (1-22)
+
+```{r}
+for_diff1 <- forecast(diff1, h=22, model = arima(diff1, c(0,0,0))) 
+plot(for_diff1, ylab = 'Value', xlab = 'Time')
+```
+
+VI. Προσθέστε μία εποχική συνιστώσα (π.χ. την επίδραση του Ιανουαρίου) στην γραμμική τάση (φτιάξτε μία binary μεταβλητή που θα δείχνει αν το exchange rate είναι από το Γενάρη ή όχι) Κάντε fit το μοντέλο με την επίδραση του Γενάρη.
+
+**Epilisi**
+1. na vrw olous tous jenuary apo ta arxika data
+2. na eksalipsoume tin tasi pou mporei na exoun oi times tou ianouatiou
+3. pernoume ton meso oro twn de-trend values tou ianouariou kai mas dinoun tin epoxiki sinistosa.
+
+```{r}
+# 1) kanw filter ola ta dates tou iannouariou apo ta arxika data.
+jenData = dplyr::filter(data, grepl("-01-",date))
+# 2) ta metatrepw se TS kai apalifw tin tasi
+jenTS = ts(jenData$FXUSDCAD)
+plot.ts(jenTS)
+#  3) Paratiroume oti den iparxei tasi stis times tou ianouariou opote eksagoume tin epoxiki sinistosw pernontas ton meso oro
+jen_season_factor = mean(jenTS)
+print("Sesonal factor of jennuary is:")
+jen_season_factor
+```
+VII. Κάνετε fit a quadratic trend θεωρώντας και την επίδραση του Γενάρη
+**Epilisi**
+
+Kanw fit to modelo tou quadratic trend ws eksis: lm(x~time + I(time^2) + epoxiki sinistosa jenuary)
+
+```{r}
+temp <- replicate(length(time), jen_season_factor)
+temp
+reg2 <- lm(x~time + I(time^2))
+#time 
+plot(x)
+points(time,(predict.lm(reg2)+jen_season_factor)/2,type='l',col='red')
+points(time,predict.lm(reg1),type='l',col='blue')
+
+```
+
+VIII. Κανετε το γράφημα διασποράς μεταξύ των τιμών exchange rates and the lagged values
+```{r}
+lag1.plot(x,1)
+```
+IX. Υπολογίστε την αυτοσυσχέτιση r_1 υστέρησης 1. Τι παρατηρείτε?
+
+**Apantisi**
+paratiroume oti to ACF 1 exei autoxorlation 0.99. Pragma pou simenei oti exoume sxedon tautisi (kati to opoio itan anamenomeno afou 1 imera den epireazei simantika tin xronosira pou exei parokipsei apo paratirisis 2 xronon).
+```{r}
+print(acf(x, lag.max = 2, plot = FALSE))
+acf2(x,50)
+```
+X. Φτιάξτε μια συνάρτηση (ονομάστε την cal AC(y,k) που θα υπολογίζει την αυτοσυσχέτιση υστέρισης k γενικά για μία χρονοσειρά
+
+```{r}
+AC <- function(y,k) {
+  myACF <- acf(x, lag.max = k, plot = FALSE)
+  return(unlist(myACF$acf)[k+1])
+}
+
+test <- AC(x,2)
+test
+```
+
+Στα παραπάνω δεδομένα φτιάξτε το ΑR(1) και MA(1) μοντέλο
+
+**Paratirisis**
+1) Paratiroume oti to monrelo ARIMA(1,0,0) den kanei poli kalo fit dioti exei statistika simantika residuals kai kai mi statistika simantika p-values
+2) Omoios paratirite kai gia to ARIMA(0,0,1) mono pou to sigkekrimeno mporei na theorithei oti kanei xirotero fit afou exei perisotera statistika simantika reciduals
+
+```{r}
+ts.plot(x)
+acf2(x,50)
+sarima(x,1,0,0)
+sarima(x,0,0,1)
+sarima(x,2,1,2)
+```
+XII. Συγκρίνετε τα παραπάνω δύο μοντέλα με το ARIMA(2,1,2) Υπολογίστε τα ΜΑΕ (MEAN ABSOLUTE ERROR), mse, mape
+To sigkekrimeno montelo paratirite oti kanei kalitero fit apo ta proigoumena 2 pou dokimastikan dioti den exei statistika simantika reciduals kathos episis exei kai arketa statistika simantika p-values.
+
+**Elenxos MAE, msem mape**
+
+```{r}
+for1 <- sarima.for(x[1:length(x-20)],20,1,0,0)
+for2 <- sarima.for(x[1:length(x-20)],20,0,0,1)
+for3 <- sarima.for(x[1:length(x-20)],20,2,1,2)
+```
+```{r}
+print("Model 1 evaluation")
+acc1 <- accuracy(for1$pred,x[length(x-20):length(x)])
+acc1
+print("Model 2 evaluation")
+acc2 <- accuracy(for2$pred,x[length(x-20):length(x)])
+acc2
+print("Model 3 evaluation")
+acc3 <- accuracy(for3$pred,x[length(x-20):length(x)])
+acc3
+```
+```{r}
+# compare RMSE
+if ( acc1[2] <= acc2[2] & acc1[2] <= acc3[2] ) {
+print("Best Model Is: Model 1")
+} else if ( acc2[2] <= acc1[2] & acc2[2] <= acc3[2] ) {
+print("Best Model Is: Model 2")
+} else {
+print("Best Model Is: Model 3")
+}
+```
+
